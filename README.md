@@ -45,6 +45,11 @@ $ ./gradlew test
 | spring-boot-starter-webflux                |   3.4.4   |
 | spring-boot-starter-oauth2-resource-server |   3.4.4   |
 | dynamodb-enhanced                          |  2.31.21  |
+
+```
+$ ./gradlew dependencyUpdate -Drevision=release
+```
+
 ### Run
 ```
 $  ./gradlew bootRun --args='--spring.profiles.active=local'
