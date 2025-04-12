@@ -1,0 +1,8 @@
+{
+  "message": "Request not valid",
+  "errors": [
+    "Title is required",
+    "Description is required"
+  ],
+  "status": 400
+}

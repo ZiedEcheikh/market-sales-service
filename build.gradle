@@ -1,0 +1,118 @@
+plugins {
+	id 'java'
+	alias(libs.plugins.spring.boot)
+	alias(libs.plugins.spring.dependency)
+	id 'jacoco'
+	id 'checkstyle'
+	id 'pmd'
+	alias(libs.plugins.spotbugs)
+	alias(libs.plugins.dependency.updates )
+}
+
+ext {
+	set('springCloudVersion', "2024.0.1")
+}
+
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+wrapper {
+    gradleVersion = '8.13'
+}
+
+
+dependencies {
+	implementation libs.spring.boot.webflux
+	implementation libs.spring.boot.oauth2
+	implementation libs.spring.boot.actuator
+	implementation libs.spring.boot.validation
+	implementation libs.aws.dynamodb.enhanced
+
+	compileOnly libs.lombok
+	annotationProcessor libs.lombok
+
+	testImplementation libs.spring.boot.test
+	testImplementation libs.reactor.test
+	testRuntimeOnly libs.junit.platform
+	testImplementation libs.spring.boot.testcontainers
+	testImplementation libs.spring.security.test
+	testImplementation libs.testcontainers.junit
+
+	testCompileOnly libs.lombok
+	testAnnotationProcessor libs.lombok
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+test {
+    systemProperty 'spring.profiles.active', 'test'
+}
+
+tasks.named('test') {
+
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        csv.required = true
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+checkstyle {
+    toolVersion '10.7.0'
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        xml.destination rootProject.file("build/reports/checkstyle/checkstyle.xml")
+    }
+}
+
+
+pmd {
+    toolVersion = "7.12.0"
+    ruleSetFiles = files("config/pmd/pmd.xml")
+    ruleSets = []
+}
+
+tasks.withType(Pmd) {
+    reports {
+        xml.destination rootProject.file("build/reports/pmd/pmd.xml")
+        html.destination rootProject.file("build/reports/pmd/pmd.html")
+    }
+    setSource(fileTree(dir: "${projectDir}/src/", include: "**/*.java"))
+}
+
+
+spotbugs {
+    ignoreFailures = true
+    showStackTraces = false
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+
+    reports {
+        xml {
+            required.set(true)
+        }
+        html {
+            required.set(true)
+        }
+    }
+}

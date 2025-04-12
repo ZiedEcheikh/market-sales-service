@@ -1,0 +1,28 @@
+[
+  {
+    "identify": "1",
+    "title": "Bersh Mode",
+    "description": "Depuis 1998, Bersh Mode est la marque préférée des jeunes",
+    "status": "DRAFT",
+    "startDate": "2025-08-03T10:30:00",
+    "endDate": "2025-08-05T10:30:00"
+  },
+
+  {
+    "identify": "2",
+    "title": "Pure Line",
+    "description": "Découvrez la gamme de climatiseur par évaporation Rafy de Pureline",
+    "status": "DRAFT",
+    "startDate": "2025-08-03T10:30:00",
+    "endDate": "2025-09-05T10:30:00"
+  },
+
+  {
+    "identify": "3",
+    "title": "Votre été sur la Cote Méditerranéenne",
+    "description": "Soleil et bleu azur, plage dorrées et criques sauvages, chant des cigales et senteurs d''olivier...",
+    "status": "DRAFT",
+    "startDate": "2025-08-03T10:30:00",
+    "endDate": "2025-08-05T10:30:00"
+  }
+]

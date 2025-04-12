@@ -1,0 +1,28 @@
+version: '3.8'
+
+networks:
+  custom_net:
+    driver: bridge
+
+services:
+  sales:
+    image: market-sales-service:latest
+    container_name: market-sales-service
+    ports:
+      - "8181:8181"
+    environment:
+      - AWS_REGION=eu-west-1
+      - AWS_ACCESS_KEY_ID=AKIAZLK4N52DPAS5BLS6
+      - AWS_SECRET_ACCESS_KEY=A6KSvZSWWpIn75ZZfk
+      - AWS_DYNAMODB_ENDPOINT=http://dynamodb:8000
+    networks:
+      - custom_net
+  dynamodb:
+    image: amazon/dynamodb-local
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    environment:
+      - SPRING_DATASOURCE_PASSWORD=secret
+    networks:
+      - custom_net
