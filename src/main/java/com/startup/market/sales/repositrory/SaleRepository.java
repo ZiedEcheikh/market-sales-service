@@ -29,10 +29,13 @@ public class SaleRepository {
 	private final DynamoDbEnhancedAsyncClient enhancedAsyncClient;
 	private final DynamoDbAsyncTable<SaleItem> saleDynamoDbAsyncTable;
 	private final DynamoDbAsyncTable<MetaDataItem> metaDataDynamoDbAsyncTable;
+	private final String metadataSaleId;
 
 	public SaleRepository(@Value("${aws.dynamodb.market.sale.table.name}") final String marketSaleTableName,
 			@Value("${aws.dynamodb.metadata.table.name}") final String metadataTableName,
+			@Value("${aws.dynamodb.metadata.table.sale.id}") final String metadataSaleId,
 			final DynamoDbEnhancedAsyncClient asyncClient) {
+		this.metadataSaleId = metadataSaleId;
 		this.enhancedAsyncClient = asyncClient;
 		this.saleDynamoDbAsyncTable = enhancedAsyncClient.table(marketSaleTableName, TableSchema.fromBean(SaleItem.class));
 		this.metaDataDynamoDbAsyncTable = enhancedAsyncClient.table(metadataTableName, TableSchema.fromBean(MetaDataItem.class));
@@ -68,7 +71,7 @@ public class SaleRepository {
 
 	public Mono<SaleItem> createSale(final SaleItem saleToSave) {
 		//@formatter:off
-		final CompletableFuture<SaleItem> saleCreateFuture = getMetadataByKey("Sale")
+		final CompletableFuture<SaleItem> saleCreateFuture = getMetadataByKey(metadataSaleId)
 				.thenComposeAsync(saleMetadata -> {
 					saleToSave.setIdentify(String.valueOf(saleMetadata.getIncrementId()));
 					return transactionCreateSale(saleToSave, saleMetadata);

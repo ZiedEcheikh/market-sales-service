@@ -37,7 +37,7 @@ class SaleServiceTest {
 	@Test
 	void shouldGetSalesByStatus() {
 		final String status = "draft";
-		final List<SaleItem> sales = JsonReader.readJsonFileAsList("/data/sale/models/sales.json", SaleItem.class);
+		final List<SaleItem> sales = JsonReader.readJsonFileAsList("/data/sales/models/sales.json", SaleItem.class);
 		final Page<SaleItem> salesPage = Page.builder(SaleItem.class)
 				.items(sales).build();
 		when(saleRepository.retrieveByStatus(Status.DRAFT))
@@ -65,7 +65,7 @@ class SaleServiceTest {
 				.create(salesByStatus)
 				.expectErrorMatches(
 						throwable -> throwable instanceof ResourceNotFoundException
-								&& throwable.getMessage().equalsIgnoreCase(Message.NO_DATA_FOUND))
+								&& Message.NO_DATA_FOUND.equalsIgnoreCase(throwable.getMessage()))
 				.verify();
 	}
 
@@ -78,7 +78,7 @@ class SaleServiceTest {
 		StepVerifier
 				.create(salesByStatus)
 				.expectErrorMatches(throwable -> throwable instanceof InternalServerException
-						&& throwable.getMessage().equalsIgnoreCase(Message.INTERNAL_SERVER_ERROR))
+						&& Message.INTERNAL_SERVER_ERROR.equalsIgnoreCase(throwable.getMessage()))
 				.verify();
 	}
 
@@ -95,7 +95,7 @@ class SaleServiceTest {
 
 	@Test
 	void shouldSaveNewSale() {
-		final SaleItem sale = JsonReader.readJsonFile("/data/sale/models/sale.json", SaleItem.class);
+		final SaleItem sale = JsonReader.readJsonFile("/data/sales/models/sale.json", SaleItem.class);
 		when(saleRepository.createSale(any()))
 				.thenReturn(Mono.just(sale));
 		final Mono<SaleItem> futureSavedSale = saleService.saveNewSale(sale);
@@ -106,15 +106,15 @@ class SaleServiceTest {
 	}
 
 	@Test
-	 void shouldSaveNewSaleServerError() {
-		final SaleItem sale = JsonReader.readJsonFile("/data/sale/models/sale.json", SaleItem.class);
+	void shouldSaveNewSaleServerError() {
+		final SaleItem sale = JsonReader.readJsonFile("/data/sales/models/sale.json", SaleItem.class);
 		when(saleRepository.createSale(any()))
 				.thenReturn(Mono.error(new RuntimeException("Error happened during creating sale")));
 		final Mono<SaleItem> savedSale = saleService.saveNewSale(sale);
 		StepVerifier
 				.create(savedSale)
 				.expectErrorMatches(throwable -> throwable instanceof InternalServerException
-						&& throwable.getMessage().equalsIgnoreCase(Message.INTERNAL_SERVER_ERROR))
+						&& Message.INTERNAL_SERVER_ERROR.equalsIgnoreCase(throwable.getMessage()))
 				.verify();
 	}
 

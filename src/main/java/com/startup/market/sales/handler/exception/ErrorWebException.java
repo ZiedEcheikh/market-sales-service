@@ -34,10 +34,6 @@ public class ErrorWebException extends RuntimeException {
 	}
 
 	public List<String> getErrors() {
-		return errors;
-	}
-
-	public void setErrors(final List<String> errors) {
-		this.errors.addAll(errors);
+		return new ArrayList<>(errors);
 	}
 }

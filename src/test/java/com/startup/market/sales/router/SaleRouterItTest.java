@@ -7,9 +7,9 @@ import com.startup.market.sales.handler.dto.SaleDto;
 import com.startup.market.sales.items.MetaDataItem;
 import com.startup.market.sales.items.SaleItem;
 import com.startup.market.sales.repositrory.SaleRepository;
-import com.startup.market.sales.repositrory.commun.DynamodbBuilderTesting;
-import com.startup.market.sales.repositrory.commun.DynamodbServiceTesting;
 import com.startup.market.sales.utils.JsonReader;
+import com.startup.market.sales.utils.dynamodb.DynamodbServices;
+import com.startup.market.sales.utils.dynamodb.SalesTablesBuilder;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -54,8 +54,9 @@ class SaleRouterItTest {
 			.withExposedPorts(8000);
 	private String salesURI = "/sales";
 	private String salesStatusURI = "/sales/status/";
-	private String salesTableName = "market-sale";
+	private String salesTableName = "market-sales";
 	private String metadataTableName = "metadata";
+	private String metadataSaleId = "Sale";
 
 	@Autowired
 	private WebTestClient webTestClient;
@@ -64,7 +65,7 @@ class SaleRouterItTest {
 
 	private DynamoDbAsyncClient dynamoDbAsyncClient;
 	private SaleRepository saleRepository;
-	private DynamodbServiceTesting dynamodbService;
+	private DynamodbServices dynamodbService;
 
 	@DynamicPropertySource
 	static void dynamicProperties(final DynamicPropertyRegistry registry) {
@@ -86,7 +87,7 @@ class SaleRouterItTest {
 	@SneakyThrows
 	public void setUp() {
 
-		this.dynamodbService = new DynamodbServiceTesting();
+		this.dynamodbService = new DynamodbServices();
 		final String address = dynamodb.getHost();
 		final Integer port = dynamodb.getFirstMappedPort();
 		final String customDynamodbEndpoint = "http://" + address + ":" + port;
@@ -99,12 +100,12 @@ class SaleRouterItTest {
 		final DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient = DynamoDbEnhancedAsyncClient.builder()
 				.dynamoDbClient(dynamoDbAsyncClient).build();
 
-		final DynamodbBuilderTesting dynamodbBuilder = new DynamodbBuilderTesting();
+		final SalesTablesBuilder dynamodbBuilder = new SalesTablesBuilder();
 
 		this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, salesTableName).get();
 		this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, metadataTableName).get();
 
-		this.saleRepository = new SaleRepository(salesTableName, metadataTableName, dynamoDbEnhancedAsyncClient);
+		this.saleRepository = new SaleRepository(salesTableName, metadataTableName, metadataSaleId, dynamoDbEnhancedAsyncClient);
 
 		if (!this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, metadataTableName).get()) {
 			this.dynamodbService.createTable(dynamoDbAsyncClient, metadataTableName,
@@ -132,7 +133,7 @@ class SaleRouterItTest {
 	@Test
 	void shouldGetSalesByStatus() {
 		final String status = "DRAFT";
-		final SaleItem sale = JsonReader.readJsonFile("/data/sale/models/sale.json", SaleItem.class);
+		final SaleItem sale = JsonReader.readJsonFile("/data/sales/models/sale.json", SaleItem.class);
 		final SaleItem saleCreated = saleRepository.createSale(sale).block();
 		final WebTestClient.ResponseSpec response = webTestClient.get().uri(salesStatusURI + status)
 				.accept(MediaType.APPLICATION_JSON)
@@ -155,7 +156,7 @@ class SaleRouterItTest {
 		final WebTestClient.BodyContentSpec bodyContentSpec = response.expectStatus()
 				.is2xxSuccessful()
 				.expectBody();
-		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sale/response/noDataFound.json");
+		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sales/response/noDataFound.json");
 		assertAll(
 				() -> assertNotNull(bodyContentSpec),
 				() -> bodyContentSpec.json(expectedResponse));
@@ -170,7 +171,7 @@ class SaleRouterItTest {
 		final WebTestClient.BodyContentSpec bodyContentSpec = response.expectStatus()
 				.is4xxClientError()
 				.expectBody();
-		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sale/response/statusNotValid_clientError.json");
+		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sales/response/statusNotValid_clientError.json");
 		assertAll(
 				() -> assertNotNull(bodyContentSpec),
 				() -> bodyContentSpec.json(expectedResponse));
@@ -187,7 +188,7 @@ class SaleRouterItTest {
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
 
-		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sale/response/internal_serverError.json");
+		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sales/response/internal_serverError.json");
 		response.expectStatus().is5xxServerError()
 				.expectBody()
 				.json(expectedResponse);
@@ -195,7 +196,7 @@ class SaleRouterItTest {
 
 	@Test
 	void shouldCreateNewSale() {
-		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sale/request/correct_request.json", SaleCreateRequest.class);
+		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sales/request/correct_request.json", SaleCreateRequest.class);
 
 		final WebTestClient.ResponseSpec response = webTestClient.mutateWith(csrf()).post().uri("/sales")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -215,7 +216,7 @@ class SaleRouterItTest {
 
 	@Test
 	void shouldCreateNewSaleRangeDatesNotValid() {
-		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sale/request/range_dates_not_valid.json", SaleCreateRequest.class);
+		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sales/request/range_dates_not_valid.json", SaleCreateRequest.class);
 		final WebTestClient.ResponseSpec response = webTestClient.mutateWith(csrf()).post().uri(salesURI)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON)
@@ -224,7 +225,7 @@ class SaleRouterItTest {
 		final WebTestClient.BodyContentSpec bodyContentSpec = response.expectStatus()
 				.is4xxClientError()
 				.expectBody();
-		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sale/response/rangeDatesNotValid_clientError.json");
+		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sales/response/rangeDatesNotValid_clientError.json");
 		assertAll(
 				() -> assertNotNull(bodyContentSpec),
 				() -> bodyContentSpec.json(expectedResponse));
@@ -232,7 +233,7 @@ class SaleRouterItTest {
 
 	@Test
 	void shouldCreateNewSaleMissingFields() {
-		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sale/request/missing_fields.json", SaleCreateRequest.class);
+		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sales/request/missing_fields.json", SaleCreateRequest.class);
 		final WebTestClient.ResponseSpec response = webTestClient.mutateWith(csrf()).post().uri(salesURI)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON)
@@ -241,7 +242,7 @@ class SaleRouterItTest {
 		final WebTestClient.BodyContentSpec bodyContentSpec = response.expectStatus()
 				.is4xxClientError()
 				.expectBody();
-		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sale/response/missingFields_clientError.json");
+		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sales/response/missingFields_clientError.json");
 		assertAll(
 				() -> assertNotNull(bodyContentSpec),
 				() -> bodyContentSpec.json(expectedResponse));
@@ -250,7 +251,7 @@ class SaleRouterItTest {
 	@Test
 	@SneakyThrows
 	void shouldCreateNewSaleServerError() {
-		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sale/request/correct_request.json", SaleCreateRequest.class);
+		final SaleCreateRequest saleCreateRequest = JsonReader.readJsonFile("/data/sales/request/correct_request.json", SaleCreateRequest.class);
 
 		if (this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.salesTableName).get()) {
 			this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, salesTableName).get();
@@ -260,7 +261,7 @@ class SaleRouterItTest {
 				.accept(MediaType.APPLICATION_JSON)
 				.body(Mono.just(saleCreateRequest), SaleCreateRequest.class)
 				.exchange();
-		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sale/response/internal_serverError.json");
+		final String expectedResponse = JsonReader.readJsonFileAsString("/data/sales/response/internal_serverError.json");
 		response.expectStatus()
 				.is5xxServerError()
 				.expectBody()

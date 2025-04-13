@@ -1,5 +1,5 @@
 {
-  "TableName": "market-sale",
+  "TableName": "market-sales",
   "AttributeDefinitions": [
     {
       "AttributeName": "id",

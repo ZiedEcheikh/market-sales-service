@@ -25,9 +25,11 @@ jobs:
 
       - name: Extract pull request number
         uses: jwalton/gh-find-current-pr@v1
+        if: success() || failure()
         id: pr
       - name: Run Quality Monitor
         uses: uhafner/quality-monitor@v1
+        if: success() || failure()
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ steps.pr.outputs.number }}

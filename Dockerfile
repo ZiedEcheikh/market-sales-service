@@ -11,7 +11,7 @@ WORKDIR /project
 
 RUN pwd
 
-COPY build/libs/market-sale-service-0.0.1-SNAPSHOT.jar /project/app.jar
+COPY build/libs/market-sales-service-0.0.1-SNAPSHOT.jar /project/app.jar
 
 
 EXPOSE ${JAVA_PORT}

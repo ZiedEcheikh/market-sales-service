@@ -1,4 +1,4 @@
-package com.startup.market.sales.handler;
+package com.startup.market.sales.utils.dynamodb;
 
 import com.startup.market.sales.items.MetaDataItem;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
@@ -10,10 +10,9 @@ import software.amazon.awssdk.services.dynamodb.model.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class DynamodbService {
+public class DynamodbServices {
 
-	public CompletableFuture<Boolean> createTable(final DynamoDbAsyncClient ddb,
-			final String tableName,
+	public CompletableFuture<Boolean> createTable(final DynamoDbAsyncClient ddb, final String tableName,
 			final List<AttributeDefinition> attributes,
 			final List<KeySchemaElement> keys,
 			final List<GlobalSecondaryIndex> indexes) {
@@ -34,10 +33,10 @@ public class DynamodbService {
 				.build();
 
 		return ddb.createTable(request)
-				.thenComposeAsync(createTableResponse -> tableExists(ddb, tableName));
+				.thenComposeAsync(createTableResponse -> verifyTableExists(ddb, tableName));
 	}
 
-	public CompletableFuture<Boolean> tableExists(final DynamoDbAsyncClient ddb, final String tableName) {
+	public CompletableFuture<Boolean> verifyTableExists(final DynamoDbAsyncClient ddb, final String tableName) {
 		final DescribeTableRequest describeTableRequest = DescribeTableRequest.builder()
 				.tableName(tableName).build();
 		return ddb.describeTable(describeTableRequest)
@@ -61,7 +60,7 @@ public class DynamodbService {
 		final DeleteTableRequest request = DeleteTableRequest.builder()
 				.tableName(tableName)
 				.build();
-		return tableExists(ddb, tableName)
+		return verifyTableExists(ddb, tableName)
 				.thenCompose(isExist -> ddb.deleteTable(request))
 				.handle((response, exception) -> {
 					if (exception != null) {

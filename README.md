@@ -28,7 +28,7 @@ $ git clone git@github.com:ZiedEcheikh/market-sales-service.git
 ```
 
 ### Compile and test
-Gradle 8.10.2
+Gradle 8.13
 
 ```
 $ ./gradlew build

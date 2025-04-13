@@ -1,10 +1,10 @@
-package com.startup.market.sales.handler;
+package com.startup.market.sales.utils.dynamodb;
 
 import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.List;
 
-public class DynamodbBuilder {
+public class SalesTablesBuilder {
 
 	public List<AttributeDefinition> saleTableAttributes() {
 		final AttributeDefinition attributeHashKey = AttributeDefinition.builder()

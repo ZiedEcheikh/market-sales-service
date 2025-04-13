@@ -3,9 +3,9 @@ package com.startup.market.sales.repositrory;
 import com.startup.market.sales.constants.Status;
 import com.startup.market.sales.items.MetaDataItem;
 import com.startup.market.sales.items.SaleItem;
-import com.startup.market.sales.repositrory.commun.DynamodbBuilderTesting;
-import com.startup.market.sales.repositrory.commun.DynamodbServiceTesting;
 import com.startup.market.sales.utils.JsonReader;
+import com.startup.market.sales.utils.dynamodb.DynamodbServices;
+import com.startup.market.sales.utils.dynamodb.SalesTablesBuilder;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,6 +28,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 
 @Testcontainers
 class SaleRepositoryTest {
@@ -36,11 +37,12 @@ class SaleRepositoryTest {
 	private static GenericContainer<?> dynamodb = new GenericContainer<>(DockerImageName.parse("amazon/dynamodb-local"))
 			.withExposedPorts(8000);
 
-	private String salePathFile = "/data/sale/models/sale.json";
-	private String saleTableName = "market-sale";
+	private String salePathFile = "/data/sales/models/sale.json";
+	private String salesTableName = "market-sales";
 	private String metadataTableName = "metadata";
+	private String metadataSaleId = "Sale";
 
-	private DynamodbServiceTesting dynamodbService;
+	private DynamodbServices dynamodbService;
 	private SaleRepository saleRepository;
 	private DynamoDbAsyncClient dynamoDbAsyncClient;
 
@@ -63,7 +65,7 @@ class SaleRepositoryTest {
 	@BeforeEach
 	@SneakyThrows
 	public void setUp() {
-		this.dynamodbService = new DynamodbServiceTesting();
+		this.dynamodbService = new DynamodbServices();
 		final String address = dynamodb.getHost();
 		final Integer port = dynamodb.getFirstMappedPort();
 		final String customDynamodbEndpoint = "http://" + address + ":" + port;
@@ -77,11 +79,11 @@ class SaleRepositoryTest {
 				.dynamoDbClient(dynamoDbAsyncClient)
 				.build();
 
-		final DynamodbBuilderTesting dynamodbBuilder = new DynamodbBuilderTesting();
+		final SalesTablesBuilder dynamodbBuilder = new SalesTablesBuilder();
 
-		this.saleRepository = new SaleRepository(saleTableName, metadataTableName, dynamoDbEnhancedAsyncClient);
+		this.saleRepository = new SaleRepository(salesTableName, metadataTableName, metadataSaleId, dynamoDbEnhancedAsyncClient);
 
-		this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, saleTableName).get();
+		this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, salesTableName).get();
 		this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, metadataTableName).get();
 		if (!this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, metadataTableName).get()) {
 			this.dynamodbService.createTable(dynamoDbAsyncClient, metadataTableName,
@@ -95,8 +97,8 @@ class SaleRepositoryTest {
 			this.dynamodbService.saveMetaData(dynamoDbEnhancedAsyncClient, metadataTableName, metaData).get();
 		}
 
-		if (!this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.saleTableName).get()) {
-			this.dynamodbService.createTable(dynamoDbAsyncClient, this.saleTableName,
+		if (!this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.salesTableName).get()) {
+			this.dynamodbService.createTable(dynamoDbAsyncClient, this.salesTableName,
 					dynamodbBuilder.saleTableAttributes(),
 					dynamodbBuilder.tableSaleKeys(),
 					dynamodbBuilder.tableSaleIndexes()).get();
@@ -131,14 +133,13 @@ class SaleRepositoryTest {
 	@Test
 	@SneakyThrows
 	void shouldRetrieveSalesByStatusServerError() {
-		if (this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.saleTableName).get()) {
-			this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, saleTableName).get();
-		}
+		deleteTableIfExists();
 		final String expectedExceptionMsg = "Error happened during retrieve sales by status";
 		StepVerifier
 				.create(saleRepository.retrieveByStatus(Status.DRAFT))
 				.expectErrorMatches(throwable -> throwable instanceof RuntimeException
-						&& expectedExceptionMsg.equals(throwable.getMessage()));
+						&& expectedExceptionMsg.equals(throwable.getMessage()))
+				.verify();
 	}
 
 	@Test
@@ -165,14 +166,13 @@ class SaleRepositoryTest {
 	@Test
 	@SneakyThrows
 	void shouldRetrieveSaleKeyServerError() {
-		if (this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.saleTableName).get()) {
-			this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, saleTableName).get();
-		}
+		deleteTableIfExists();
 		final String expectedExceptionMsg = "Error happened during retrieve sale";
 		StepVerifier
 				.create(saleRepository.retrieveByKey("id"))
 				.expectErrorMatches(throwable -> throwable instanceof RuntimeException
-						&& expectedExceptionMsg.equals(throwable.getMessage()));
+						&& expectedExceptionMsg.equals(throwable.getMessage()))
+				.verify();
 	}
 
 
@@ -193,16 +193,20 @@ class SaleRepositoryTest {
 	@SneakyThrows
 	void shouldSaveNewSaleServerError() {
 		final SaleItem sale = JsonReader.readJsonFile(salePathFile, SaleItem.class);
-		if (this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.saleTableName).get()) {
-			this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, saleTableName).get();
-		}
+		deleteTableIfExists();
 		final String expectedExceptionMsg = "Error happened during creating sale";
 		StepVerifier
 				.create(saleRepository.createSale(sale))
 				.expectErrorMatches(throwable -> throwable instanceof RuntimeException
-						&& expectedExceptionMsg.equals(throwable.getMessage()));
+						&& expectedExceptionMsg.equals(throwable.getMessage()))
+				.verify();
 	}
 
+	private void deleteTableIfExists() throws ExecutionException, InterruptedException {
+		if (this.dynamodbService.verifyTableExists(dynamoDbAsyncClient, this.salesTableName).get()) {
+			this.dynamodbService.deleteTable(this.dynamoDbAsyncClient, salesTableName).get();
+		}
+	}
 
 	private AwsBasicCredentials awsBasicCredentials() {
 		return AwsBasicCredentials.create("accessKey", "secretKey");
