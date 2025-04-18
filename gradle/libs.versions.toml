@@ -1,14 +1,29 @@
 [versions]
+# gradle
+gradle = "8.13"
+# spring
 spring-boot = "3.4.4"
 spring-dependency = "1.1.7"
+dependency-updates = "0.52.0"
+
+# java lib
 lombok = "1.18.38"
+
+# aws
 aws-dynamodb-sdk = "2.31.21"
+
+# Testing
+spring-security-test = "6.4.4"
 junit-platform = "1.11.4"
 testcontainers = "1.20.6"
-spring-security = "6.4.4"
-spotbugs = "6.1.7"
-dependency-updates = "0.52.0"
 reactor-test= "3.8.0-M1"
+
+# Quality Tools
+jacoco = "0.8.11"
+checkstyle = "10.23.0"
+pmd = "7.12.0"
+spotbugs = "6.0.18"
+
 [libraries]
 spring-boot-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "spring-boot" }
 spring-boot-oauth2 = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server", version.ref = "spring-boot" }
@@ -22,11 +37,11 @@ spring-boot-test = { module = "org.springframework.boot:spring-boot-starter-test
 reactor-test = { module = "io.projectreactor:reactor-test", version.ref = "reactor-test"}
 junit-platform = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }
-spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security" }
+spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security-test" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency = { id = "io.spring.dependency-management", version.ref = "spring-dependency" }
-spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs" }
 dependency-updates = { id = "com.github.ben-manes.versions", version.ref = "dependency-updates"}
+spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs" }

@@ -11,6 +11,7 @@ services:
     ports:
       - "8181:8181"
     environment:
+      - ENVIRONMENT=local
       - AWS_REGION=eu-west-1
       - AWS_ACCESS_KEY_ID=AKIAZLK4N52DPAS5BLS6
       - AWS_SECRET_ACCESS_KEY=A6KSvZSWWpIn75ZZfk

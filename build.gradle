@@ -25,7 +25,7 @@ repositories {
 }
 
 wrapper {
-    gradleVersion = '8.13'
+	gradleVersion = libs.versions.gradle.get()
 }
 
 
@@ -60,7 +60,6 @@ test {
 }
 
 tasks.named('test') {
-
     useJUnitPlatform()
     finalizedBy jacocoTestReport
 }
@@ -85,7 +84,7 @@ jacocoTestReport {
 }
 
 checkstyle {
-    toolVersion '10.23.0'
+    toolVersion = libs.versions.checkstyle.get()
 }
 
 tasks.withType(Checkstyle) {
@@ -96,7 +95,7 @@ tasks.withType(Checkstyle) {
 
 
 pmd {
-    toolVersion = "7.12.0"
+	toolVersion = libs.versions.pmd.get()
     ruleSetFiles = files("config/pmd/pmd.xml")
     ruleSets = []
 }

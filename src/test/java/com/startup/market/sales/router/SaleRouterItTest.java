@@ -143,8 +143,7 @@ class SaleRouterItTest {
 				.returnResult()
 				.getResponseBody();
 		assertAll(() -> assertEquals(1, responseBody.size()),
-				() -> assertEquals(saleCreated.getIdentify(), responseBody.get(0).getIdentify())
-		);
+				() -> assertEquals(saleCreated.getIdentify(), responseBody.get(0).getIdentify()));
 	}
 
 	@Test
